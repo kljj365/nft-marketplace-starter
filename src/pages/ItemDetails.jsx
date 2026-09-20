@@ -1,13 +1,89 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
+import { Link, useParams } from "react-router-dom";
 import EthImage from "../images/ethereum.svg";
-import { Link } from "react-router-dom";
-import AuthorImage from "../images/author_thumbnail.jpg";
-import nftImage from "../images/nftImage.jpg";
+import Skeleton from "../components/UI/Skeleton";
+import { getItemDetails } from "../api";
 
 const ItemDetails = () => {
+  const { nftId } = useParams();
+  const [item, setItem] = useState(null);
+  const [loading, setLoading] = useState(true);
+
   useEffect(() => {
     window.scrollTo(0, 0);
-  }, []);
+    let cancelled = false;
+    async function fetchItem() {
+      setLoading(true);
+      try {
+        const data = await getItemDetails(nftId);
+        if (!cancelled) setItem(data);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+    fetchItem();
+    return () => {
+      cancelled = true;
+    };
+  }, [nftId]);
+
+  if (loading || !item) {
+    return (
+      <div id="wrapper">
+        <div className="no-bottom no-top" id="content">
+          <div id="top"></div>
+          <section aria-label="section" className="mt90 sm-mt-0">
+            <div className="container">
+              <div className="row">
+                <div className="col-md-6 text-center">
+                  <Skeleton width="100%" height="500px" borderRadius="8px" />
+                </div>
+                <div className="col-md-6">
+                  <div className="item_info">
+                    <Skeleton width="300px" height="40px" />
+                    <div className="item_info_counts">
+                      <Skeleton width="80px" height="30px" />
+                      <Skeleton width="80px" height="30px" />
+                    </div>
+                    <Skeleton width="100%" height="80px" />
+                    <div className="d-flex flex-row">
+                      <div className="mr40">
+                        <h6>Owner</h6>
+                        <div className="item_author">
+                          <div className="author_list_pp">
+                            <Skeleton width="50px" height="50px" borderRadius="50%" />
+                          </div>
+                          <div className="author_list_info">
+                            <Skeleton width="120px" height="20px" />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="de_tab tab_simple">
+                      <div className="de_tab_content">
+                        <h6>Creator</h6>
+                        <div className="item_author">
+                          <div className="author_list_pp">
+                            <Skeleton width="50px" height="50px" borderRadius="50%" />
+                          </div>
+                          <div className="author_list_info">
+                            <Skeleton width="120px" height="20px" />
+                          </div>
+                        </div>
+                      </div>
+                      <div className="spacer-40"></div>
+                      <h6>Price</h6>
+                      <Skeleton width="100px" height="30px" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div id="wrapper">
@@ -18,42 +94,41 @@ const ItemDetails = () => {
             <div className="row">
               <div className="col-md-6 text-center">
                 <img
-                  src={nftImage}
+                  src={item.nftImage}
                   className="img-fluid img-rounded mb-sm-30 nft-image"
                   alt=""
                 />
               </div>
               <div className="col-md-6">
                 <div className="item_info">
-                  <h2>Rainbow Style #194</h2>
+                  <h2>
+                    {item.title}
+                    {item.tag ? ` #${item.tag}` : ""}
+                  </h2>
 
                   <div className="item_info_counts">
                     <div className="item_info_views">
                       <i className="fa fa-eye"></i>
-                      100
+                      {item.views}
                     </div>
                     <div className="item_info_like">
                       <i className="fa fa-heart"></i>
-                      74
+                      {item.likes}
                     </div>
                   </div>
-                  <p>
-                    doloremque laudantium, totam rem aperiam, eaque ipsa quae ab
-                    illo inventore veritatis et quasi architecto beatae vitae
-                    dicta sunt explicabo.
-                  </p>
+                  <p>{item.description}</p>
                   <div className="d-flex flex-row">
                     <div className="mr40">
                       <h6>Owner</h6>
                       <div className="item_author">
                         <div className="author_list_pp">
-                          <Link to="/author">
-                            <img className="lazy" src={AuthorImage} alt="" />
+                          <Link to={`/author/${item.ownerId}`}>
+                            <img className="lazy" src={item.ownerImage} alt="" />
                             <i className="fa fa-check"></i>
                           </Link>
                         </div>
                         <div className="author_list_info">
-                          <Link to="/author">Monica Lucas</Link>
+                          <Link to={`/author/${item.ownerId}`}>{item.ownerName}</Link>
                         </div>
                       </div>
                     </div>
@@ -64,13 +139,13 @@ const ItemDetails = () => {
                       <h6>Creator</h6>
                       <div className="item_author">
                         <div className="author_list_pp">
-                          <Link to="/author">
-                            <img className="lazy" src={AuthorImage} alt="" />
+                          <Link to={`/author/${item.creatorId}`}>
+                            <img className="lazy" src={item.creatorImage} alt="" />
                             <i className="fa fa-check"></i>
                           </Link>
                         </div>
                         <div className="author_list_info">
-                          <Link to="/author">Monica Lucas</Link>
+                          <Link to={`/author/${item.creatorId}`}>{item.creatorName}</Link>
                         </div>
                       </div>
                     </div>
@@ -78,7 +153,7 @@ const ItemDetails = () => {
                     <h6>Price</h6>
                     <div className="nft-item-price">
                       <img src={EthImage} alt="" />
-                      <span>1.85</span>
+                      <span>{item.price}</span>
                     </div>
                   </div>
                 </div>
